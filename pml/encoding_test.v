@@ -19,8 +19,13 @@ fn test_non_empty_nodes() {
 		},
 		pml.Node{
 			name: 'image'
-			attributes: {
-				'source': 'strawberries.jpg'
+			attributes: pml.Attributes{
+				contents: [
+					pml.Attribute{
+						name: 'source'
+						value: 'strawberries.jpg'
+					},
+				]
 			}
 		},
 		pml.Node{
@@ -112,5 +117,15 @@ fn test_common_elements() {
 	]
 	for index, text in sample_texts {
 		assert text.str() == outputs[index]
+	}
+}
+
+fn test_attributes() {
+	sample_node := pml.Node{
+		name: 'test'
+		// attributes: {
+		// 	'colour1': 'yellow'
+		// 	'colour2': 'blue'
+		// }
 	}
 }

@@ -35,14 +35,22 @@ fn join_parts(parts []string, config EncodingConfig) string {
 	return parts.join(joiner)
 }
 
-fn attributes_to_string(attributes map[string]string, config EncodingConfig) string {
-	if attributes.len == 0 {
+fn attributes_to_string(attributes Attributes, config EncodingConfig) string {
+	if attributes.contents.len == 0 {
 		return ''
 	}
 	mut attr_strings := []string{}
 
-	for name, value in attributes {
-		attr_strings << optionally_quote(name) + ' = ' + optionally_quote(value)
+	for content in attributes.contents {
+		// optionally_quote(name) + ' = ' + optionally_quote(value)
+		attr_strings << match content {
+			Comment {
+				comment_to_string(content, config)
+			}
+			Attribute {
+				optionally_quote(content.name) + ' = ' + optionally_quote(content.value)
+			}
+		}
 	}
 
 	return '(' + join_parts(attr_strings, config) + ')'
@@ -112,7 +120,7 @@ fn children_to_string(children []Child, config EncodingConfig) string {
 fn (node Node) recursive_str(config EncodingConfig) string {
 	mut output_parts := []string{}
 	output_parts << node.name
-	if node.attributes.len > 0 {
+	if node.attributes.contents.len > 0 {
 		output_parts << attributes_to_string(node.attributes, config)
 	}
 	if node.children.len > 0 {

@@ -76,3 +76,41 @@ fn test_comment() {
 		assert comment.str() == outputs[index]
 	}
 }
+
+fn test_common_elements() {
+	sample_texts := [
+		pml.Node{
+			name: 'text'
+			children: [
+				'Bob',
+			]
+		},
+		pml.Node{
+			name: 'text'
+			children: [
+				'3.14',
+			]
+		},
+		pml.Node{
+			name: 'text'
+			children: [
+				'We want simplicity.',
+			]
+		},
+		pml.Node{
+			name: 'text'
+			children: [
+				'root\\config["port"]',
+			]
+		},
+	]
+	outputs := [
+		'[text Bob]',
+		'[text 3.14]',
+		'[text We want simplicity.]',
+		'[text root\\\\config\\[\\"port\\"\\]]',
+	]
+	for index, text in sample_texts {
+		assert text.str() == outputs[index]
+	}
+}

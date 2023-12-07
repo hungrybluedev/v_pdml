@@ -67,6 +67,25 @@ fn comment_to_string(comment Comment, config EncodingConfig) string {
 	return '[- ' + join_parts(comment_outputs, config) + ' -]'
 }
 
+fn escape_plaintext(content string) string {
+	return content.replace_each([
+		'\\',
+		'\\\\',
+		'\n',
+		'\\n',
+		'\r',
+		'\\r',
+		'\t',
+		'\\t',
+		'"',
+		'\\"',
+		'[',
+		'\\[',
+		']',
+		'\\]',
+	])
+}
+
 fn children_to_string(children []Child, config EncodingConfig) string {
 	if children.len == 0 {
 		return ''
@@ -76,7 +95,7 @@ fn children_to_string(children []Child, config EncodingConfig) string {
 	for child in children {
 		children_strings << match child {
 			string {
-				child.trim_space()
+				escape_plaintext(child.trim_space())
 			}
 			Node {
 				child.recursive_str(config)

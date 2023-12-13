@@ -3,8 +3,14 @@ module pml
 const default_line_break_threshold = 80
 
 fn optionally_quote(content string) string {
-	return if content.contains_any(' \t') {
-		'"' + content + '"'
+	trigger := content.contains_any(' \t\\\'"')
+	has_double_quote := content.contains('"')
+	return if trigger {
+		if has_double_quote {
+			"'" + content + "'"
+		} else {
+			'"' + content + '"'
+		}
 	} else {
 		content
 	}
@@ -21,18 +27,31 @@ pub fn (comment Comment) str() string {
 	return comment_to_string(comment, offset: '')
 }
 
-fn join_parts(parts []string, config EncodingConfig) string {
+fn join_parts(parts []string, prefix string, suffix string, config EncodingConfig) string {
 	mut line_length := 0
 	for part in parts {
 		line_length += part.len
+		if part.contains('\n') {
+			line_length += config.line_break_threshold
+		}
 	}
 
-	joiner := if line_length > config.line_break_threshold {
+	too_long := line_length > config.line_break_threshold
+
+	joiner := if too_long {
 		'\n' + config.offset + config.indent
 	} else {
 		' '
 	}
-	return parts.join(joiner)
+
+	combined := parts.join(joiner)
+	return if too_long {
+		new_line_offset := '\n' + config.offset
+
+		prefix + new_line_offset + config.indent + combined + new_line_offset + suffix
+	} else {
+		prefix + combined + suffix
+	}
 }
 
 fn attributes_to_string(attributes Attributes, config EncodingConfig) string {
@@ -53,7 +72,7 @@ fn attributes_to_string(attributes Attributes, config EncodingConfig) string {
 		}
 	}
 
-	return '(' + join_parts(attr_strings, config) + ')'
+	return join_parts(attr_strings, '(', ')', offset: config.offset + config.indent)
 }
 
 fn comment_to_string(comment Comment, config EncodingConfig) string {
@@ -72,7 +91,7 @@ fn comment_to_string(comment Comment, config EncodingConfig) string {
 		}
 	}
 
-	return '[- ' + join_parts(comment_outputs, config) + ' -]'
+	return join_parts(comment_outputs, '[- ', ' -]', config)
 }
 
 fn escape_plaintext(content string) string {
@@ -114,7 +133,7 @@ fn children_to_string(children []Child, config EncodingConfig) string {
 		}
 	}
 
-	return join_parts(children_strings, config)
+	return join_parts(children_strings, '', '', config)
 }
 
 fn (node Node) recursive_str(config EncodingConfig) string {
@@ -126,7 +145,7 @@ fn (node Node) recursive_str(config EncodingConfig) string {
 	if node.children.len > 0 {
 		output_parts << children_to_string(node.children, config)
 	}
-	return '[' + join_parts(output_parts, config) + ']'
+	return join_parts(output_parts, '[', ']', config)
 }
 
 pub fn (node Node) str() string {

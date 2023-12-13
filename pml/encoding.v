@@ -1,16 +1,38 @@
 module pml
 
+import strings
+
 const default_line_break_threshold = 80
 
 fn optionally_quote(content string) string {
-	trigger := content.contains_any(' \t\\\'"')
-	has_double_quote := content.contains('"')
+	trigger := content.contains_any(" \t\\'")
 	return if trigger {
-		if has_double_quote {
-			"'" + content + "'"
+		is_double_quoted := content[0] == `"` && content[content.len - 1] == `"`
+		cleaned_content := if is_double_quoted {
+			mut cleaned_buffer := strings.new_builder(content.len - 2)
+			mut is_escaped := false
+
+			for i := 1; i < content.len - 1; i++ {
+				ch := content[i]
+				if is_escaped {
+					is_escaped = false
+					cleaned_buffer.write_u8(`\\`)
+					cleaned_buffer.write_u8(ch)
+				} else if ch == `\\` {
+					is_escaped = true
+				} else if ch == `"` {
+					cleaned_buffer.write_u8(`\\`)
+					cleaned_buffer.write_u8(`"`)
+				} else {
+					cleaned_buffer.write_u8(ch)
+				}
+			}
+
+			cleaned_buffer.str()
 		} else {
-			'"' + content + '"'
+			content
 		}
+		'"' + cleaned_content + '"'
 	} else {
 		content
 	}

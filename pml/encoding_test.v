@@ -123,9 +123,43 @@ fn test_common_elements() {
 fn test_attributes() {
 	sample_node := pml.Node{
 		name: 'test'
-		// attributes: {
-		// 	'colour1': 'yellow'
-		// 	'colour2': 'blue'
-		// }
+		attributes: pml.Attributes{
+			contents: [
+				pml.Attribute{
+					name: 'title'
+					value: 'A planet'
+				},
+				pml.Comment{
+					content: ['size in mm']
+				},
+				pml.Attribute{
+					name: 'width'
+					value: '400'
+				},
+				pml.Attribute{
+					name: 'height'
+					value: '248'
+				},
+				pml.Attribute{
+					name: 'path1'
+					value: '/root/foo/bar'
+				},
+				pml.Attribute{
+					name: 'path2'
+					value: 'C:\\\\config.txt'
+				},
+			]
+		}
 	}
+	assert sample_node.str() == '[
+	test
+	(
+		title = "A planet"
+		[- size in mm -]
+		width = 400
+		height = 248
+		path1 = /root/foo/bar
+		path2 = "C:\\\\config.txt"
+	)
+]'
 }

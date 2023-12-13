@@ -163,3 +163,63 @@ fn test_attributes() {
 	)
 ]'
 }
+
+fn test_quoted_value_attributes() {
+	sample_node := pml.Node{
+		name: 'test'
+		attributes: pml.Attributes{
+			contents: [
+				pml.Attribute{
+					name: 'colour'
+					value: '"yellow"'
+				},
+				pml.Attribute{
+					name: 'colour'
+					value: '"light yellow"'
+				},
+				pml.Attribute{
+					name: 'path'
+					value: '"/root/foo/bar"'
+				},
+				pml.Attribute{
+					name: 'path'
+					value: '"C:\\\\config.txt"'
+				},
+				pml.Attribute{
+					name: 'list'
+					value: '"list[3]"'
+				},
+				pml.Attribute{
+					name: 'list'
+					value: '"list\\[3\\]"'
+				},
+				pml.Attribute{
+					name: 'quote'
+					value: '"He said\n\\"That\'s ok\\""'
+				},
+				pml.Attribute{
+					name: 'quote'
+					value: '"Tim\nTom\nTam"'
+				},
+				pml.Attribute{
+					name: 'empty'
+					value: '""'
+				},
+			]
+		}
+	}
+	assert sample_node.str() == '[
+	test
+	(
+		colour = "yellow"
+		colour = "light yellow"
+		path = "/root/foo/bar"
+		path = "C:\\\\config.txt"
+		list = "list[3]"
+		list = "list\\[3\\]"
+		quote = "He said\n\\"That\'s ok\\""
+		quote = "Tim\nTom\nTam"
+		empty = ""
+	)
+]'
+}

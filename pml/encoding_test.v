@@ -151,8 +151,7 @@ fn test_attributes() {
 			]
 		}
 	}
-	assert sample_node.str() == '[
-	test
+	assert sample_node.str() == '[test
 	(
 		title = "A planet"
 		[- size in mm -]
@@ -208,8 +207,7 @@ fn test_quoted_value_attributes() {
 			]
 		}
 	}
-	assert sample_node.str() == '[
-	test
+	assert sample_node.str() == '[test
 	(
 		colour = "yellow"
 		colour = "light yellow"

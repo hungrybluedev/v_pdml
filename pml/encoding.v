@@ -42,6 +42,7 @@ fn optionally_quote(content string) string {
 pub struct EncodingConfig {
 	offset               string
 	indent               string = '\t'
+	spacing              string = ' '
 	line_break_threshold int    = pml.default_line_break_threshold
 }
 
@@ -67,13 +68,20 @@ fn join_parts(parts []string, prefix string, suffix string, config EncodingConfi
 	}
 
 	combined := parts.join(joiner)
-	return if too_long {
-		new_line_offset := '\n' + config.offset
 
-		prefix + new_line_offset + config.indent + combined + new_line_offset + suffix
-	} else {
-		prefix + combined + suffix
+	if !too_long {
+		return prefix + combined + suffix
 	}
+
+	new_line_offset := '\n' + config.offset
+
+	clean_prefix := if prefix[prefix.len - 1] == ` ` {
+		prefix[0..prefix.len - 1]
+	} else {
+		prefix
+	}
+
+	return clean_prefix + new_line_offset + config.indent + combined + new_line_offset + suffix
 }
 
 fn attributes_to_string(attributes Attributes, config EncodingConfig) string {
@@ -83,7 +91,6 @@ fn attributes_to_string(attributes Attributes, config EncodingConfig) string {
 	mut attr_strings := []string{}
 
 	for content in attributes.contents {
-		// optionally_quote(name) + ' = ' + optionally_quote(value)
 		attr_strings << match content {
 			Comment {
 				comment_to_string(content, config)
@@ -160,14 +167,16 @@ fn children_to_string(children []Child, config EncodingConfig) string {
 
 fn (node Node) recursive_str(config EncodingConfig) string {
 	mut output_parts := []string{}
-	output_parts << node.name
+	mut spacing := ''
 	if node.attributes.contents.len > 0 {
+		spacing = ' '
 		output_parts << attributes_to_string(node.attributes, config)
 	}
 	if node.children.len > 0 {
+		spacing = ' '
 		output_parts << children_to_string(node.children, config)
 	}
-	return join_parts(output_parts, '[', ']', config)
+	return join_parts(output_parts, '[' + node.name + spacing, ']', config)
 }
 
 pub fn (node Node) str() string {

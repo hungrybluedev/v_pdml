@@ -24,14 +24,14 @@ pub const user_manual = PMLTestSuite{
 								'First test',
 							]
 						},
-						'This is a ',
+						'This is a',
 						Node{
 							name: 'i'
 							children: [
 								'simple',
 							]
 						},
-						' example.',
+						'example.',
 					]
 				}
 			}

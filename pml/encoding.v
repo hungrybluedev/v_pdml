@@ -46,83 +46,6 @@ pub struct EncodingConfig {
 	line_break_threshold int    = pml.default_line_break_threshold
 }
 
-pub fn (comment Comment) str() string {
-	return comment_to_string(comment, offset: '')
-}
-
-fn join_parts(parts []string, prefix string, suffix string, config EncodingConfig) string {
-	mut line_length := 0
-	for part in parts {
-		line_length += part.len
-		if part.contains('\n') {
-			line_length += config.line_break_threshold
-		}
-	}
-
-	too_long := line_length > config.line_break_threshold
-
-	joiner := if too_long {
-		'\n' + config.offset + config.indent
-	} else {
-		' '
-	}
-
-	combined := parts.join(joiner)
-
-	if !too_long {
-		return prefix + combined + suffix
-	}
-
-	new_line_offset := '\n' + config.offset
-
-	clean_prefix := if prefix[prefix.len - 1] == ` ` {
-		prefix[0..prefix.len - 1]
-	} else {
-		prefix
-	}
-
-	return clean_prefix + new_line_offset + config.indent + combined + new_line_offset + suffix
-}
-
-fn attributes_to_string(attributes Attributes, config EncodingConfig) string {
-	if attributes.contents.len == 0 {
-		return ''
-	}
-	mut attr_strings := []string{}
-
-	for content in attributes.contents {
-		attr_strings << match content {
-			Comment {
-				comment_to_string(content, config)
-			}
-			Attribute {
-				optionally_quote(content.name) + ' = ' + optionally_quote(content.value)
-			}
-		}
-	}
-
-	return join_parts(attr_strings, '(', ')', offset: config.offset + config.indent)
-}
-
-fn comment_to_string(comment Comment, config EncodingConfig) string {
-	if comment.content.len == 0 {
-		return ''
-	}
-	mut comment_outputs := []string{}
-	for child in comment.content {
-		comment_outputs << match child {
-			Comment {
-				comment_to_string(child, config)
-			}
-			string {
-				child.trim_space()
-			}
-		}
-	}
-
-	return join_parts(comment_outputs, '[- ', ' -]', config)
-}
-
 fn escape_plaintext(content string) string {
 	return content.replace_each([
 		'\\',
@@ -142,43 +65,171 @@ fn escape_plaintext(content string) string {
 	])
 }
 
-fn children_to_string(children []Child, config EncodingConfig) string {
-	if children.len == 0 {
-		return ''
-	}
+type EncodingNodeChild = EncodingNode | string
 
-	mut children_strings := []string{}
-	for child in children {
-		children_strings << match child {
-			string {
-				escape_plaintext(child.trim_space())
-			}
-			Node {
-				child.recursive_str(config)
-			}
+struct EncodingNode {
+	prefix string
+	suffix string
+	items  []EncodingNodeChild
+}
+
+pub fn (comment Comment) encode() EncodingNode {
+	mut items := []EncodingNodeChild{cap: comment.content.len}
+	for child in comment.content {
+		items << match child {
 			Comment {
-				child.str()
+				EncodingNodeChild(child.encode())
+			}
+			string {
+				EncodingNodeChild(child.trim_space())
 			}
 		}
 	}
 
-	return join_parts(children_strings, '', '', config)
+	return EncodingNode{
+		prefix: '[-'
+		suffix: ' -]'
+		items: items
+	}
 }
 
-fn (node Node) recursive_str(config EncodingConfig) string {
-	mut output_parts := []string{}
-	mut spacing := ''
+pub fn (attributes Attributes) encode() EncodingNode {
+	mut items := []EncodingNodeChild{cap: attributes.contents.len}
+	for content in attributes.contents {
+		items << match content {
+			Comment {
+				EncodingNodeChild(content.encode())
+			}
+			Attribute {
+				EncodingNodeChild(optionally_quote(content.name) + ' = ' +
+					optionally_quote(content.value))
+			}
+		}
+	}
+
+	return EncodingNode{
+		prefix: '('
+		suffix: ')'
+		items: items
+	}
+}
+
+pub fn (node Node) encode() EncodingNode {
+	mut items := []EncodingNodeChild{cap: node.children.len}
 	if node.attributes.contents.len > 0 {
-		spacing = ' '
-		output_parts << attributes_to_string(node.attributes, config)
+		items << node.attributes.encode()
 	}
-	if node.children.len > 0 {
-		spacing = ' '
-		output_parts << children_to_string(node.children, config)
+	for child in node.children {
+		items << match child {
+			Comment, Node {
+				EncodingNodeChild(child.encode())
+			}
+			string {
+				EncodingNodeChild(escape_plaintext(child.trim_space()))
+			}
+		}
 	}
-	return join_parts(output_parts, '[' + node.name + spacing, ']', config)
+
+	return EncodingNode{
+		prefix: '[' + node.name
+		suffix: ']'
+		items: items
+	}
+}
+
+fn (node EncodingNode) size(config EncodingConfig) int {
+	mut size := node.prefix.len + node.suffix.len
+	for item in node.items {
+		size += match item {
+			EncodingNode {
+				item.size(config)
+			}
+			string {
+				if item.contains('\n') {
+					size += config.line_break_threshold
+				}
+				item.len
+			}
+		}
+	}
+	return size
+}
+
+fn (node EncodingNode) single_line_output(size int, config EncodingConfig) string {
+	mut output := strings.new_builder(size)
+
+	output.write_string(config.offset)
+	output.write_string(node.prefix)
+	if node.items.len > 0 && node.prefix.len > 1 {
+		output.write_string(config.spacing)
+	}
+
+	for index, item in node.items {
+		if index != 0 {
+			output.write_u8(` `)
+		}
+		output.write_string(match item {
+			EncodingNode {
+				item.single_line_output(size, offset: '', indent: '')
+			}
+			string {
+				item
+			}
+		})
+	}
+
+	output.write_string(node.suffix)
+
+	return output.str()
+}
+
+fn (node EncodingNode) multi_line_output(size int, config EncodingConfig) string {
+	mut output := strings.new_builder(size)
+
+	output.write_string(config.offset)
+	output.write_string(node.prefix)
+
+	for item in node.items {
+		output.write_u8(`\n`)
+		output.write_string(config.offset)
+		output.write_string(match item {
+			EncodingNode {
+				item.output(
+					offset: config.indent
+					indent: config.indent
+				)
+			}
+			string {
+				output.write_string(config.indent)
+				item
+			}
+		})
+	}
+
+	output.write_u8(`\n`)
+	output.write_string(config.offset)
+	output.write_string(node.suffix)
+
+	return output.str()
+}
+
+fn (node EncodingNode) output(config EncodingConfig) string {
+	content_size := node.size(config)
+	return if content_size <= config.line_break_threshold {
+		node.single_line_output(content_size, config)
+	} else {
+		node.multi_line_output(content_size, config)
+	}
+}
+
+pub fn (comment Comment) str() string {
+	return comment.encode().output()
 }
 
 pub fn (node Node) str() string {
-	return node.recursive_str(offset: '')
+	return node.encode().output()
+}
+
+pub fn (doc PMLDoc) str() string {
+	return doc.root.str()
 }

@@ -221,3 +221,67 @@ fn test_quoted_value_attributes() {
 	)
 ]'
 }
+
+fn test_medium_document() {
+	sample_doc := pml.PMLDoc{
+		root: pml.Node{
+			name: 'doc'
+			children: [
+				pml.Node{
+					name: 'title'
+					children: [
+						'PML Document Example',
+					]
+				},
+				pml.Node{
+					name: 'ch'
+					children: [
+						pml.Node{
+							name: 'title'
+							children: [
+								'Chapter 1',
+							]
+						},
+						'Text of paragraph 1.',
+						'Text of paragraph 2.',
+						'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
+					]
+				},
+				pml.Node{
+					name: 'ch'
+					children: [
+						pml.Node{
+							name: 'title'
+							children: [
+								'Chapter 2',
+							]
+						},
+						'Paragraph',
+						pml.Node{
+							name: 'image'
+							attributes: pml.Attributes{
+								contents: [
+									pml.Attribute{
+										name: 'source'
+										value: 'images/strawberries.jpg'
+									},
+								]
+							}
+						},
+					]
+				},
+			]
+		}
+	}
+	expected_output := '[doc
+	[title PML Document Example]
+	[ch
+		[title Chapter 1]
+		Text of paragraph 1.
+		Text of paragraph 2.
+		Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+	]
+	[ch [title Chapter 2] Paragraph [image (source = images/strawberries.jpg)]]
+]'
+	assert sample_doc.str() == expected_output, 'Sample document does not match expected output.'
+}

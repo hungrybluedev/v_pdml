@@ -99,7 +99,7 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 							})
 						}
 						return Attributes{
-							contents: attribute_children
+							children: attribute_children
 						}
 					}
 				}
@@ -215,6 +215,13 @@ fn parse_comment(mut reader io.Reader) !Comment {
 		ch := next_char(mut reader, mut local_buf)!
 		match ch {
 			`[` {
+				next_ch := next_char(mut reader, mut local_buf)!
+				if next_ch != `-` {
+					comment_buffer.write_u8(ch)
+					comment_buffer.write_u8(next_ch)
+					current_state = .reading_comment
+					continue
+				}
 				collected_content := comment_buffer.str().trim_space()
 				if collected_content.len > 0 {
 					children << CommentChild(collected_content)
@@ -238,9 +245,12 @@ fn parse_comment(mut reader io.Reader) !Comment {
 			`]` {
 				match current_state {
 					.found_dash {
-						children << CommentChild(comment_buffer.str().trim_space())
+						collected_content := comment_buffer.str().trim_space()
+						if collected_content.len > 0 {
+							children << CommentChild(collected_content)
+						}
 						return Comment{
-							content: children
+							children: children
 						}
 					}
 					.reading_comment {
@@ -248,8 +258,15 @@ fn parse_comment(mut reader io.Reader) !Comment {
 					}
 				}
 			}
+			`\n` {
+				collected_content := comment_buffer.str().trim_space()
+				if collected_content.len > 0 {
+					children << CommentChild(collected_content)
+				}
+			}
 			else {
 				comment_buffer.write_u8(ch)
+				current_state = .reading_comment
 			}
 		}
 	}
@@ -264,7 +281,7 @@ enum NodeParserState {
 	reading_child_string_content
 }
 
-fn parse_node_after_bracket(mut reader io.Reader) !Node {
+fn parse_node_after_bracket(mut reader io.Reader) !Child {
 	mut local_buf := [u8(0)]
 	mut current_state := NodeParserState.waiting_for_node_name
 
@@ -290,6 +307,17 @@ fn parse_node_after_bracket(mut reader io.Reader) !Node {
 						// We skip whitespace
 					}
 					.reading_child_string_content {
+						general_child_content.write_u8(ch)
+					}
+				}
+			}
+			`-` {
+				match current_state {
+					.waiting_for_node_name {
+						return parse_comment(mut reader)!
+					}
+					else {
+						current_state = .reading_child_string_content
 						general_child_content.write_u8(ch)
 					}
 				}
@@ -385,13 +413,8 @@ fn parse_node_after_bracket(mut reader io.Reader) !Node {
 			else {
 				match current_state {
 					.waiting_for_node_name {
-						if ch == `-` {
-							// We found the start of a comment
-							children << Child(parse_comment(mut reader)!)
-						} else {
-							current_state = .reading_node_name
-							name_buffer.write_u8(ch)
-						}
+						current_state = .reading_node_name
+						name_buffer.write_u8(ch)
 					}
 					.reading_node_name {
 						name_buffer.write_u8(ch)
@@ -427,7 +450,11 @@ pub fn parse_single_node(mut reader io.Reader) !Node {
 				// We skip whitespace
 			}
 			`[` {
-				return parse_node_after_bracket(mut reader)!
+				result := parse_node_after_bracket(mut reader)!
+				if result !is Node {
+					return error('Expected node, found "${result}".')
+				}
+				return result as Node
 			}
 			else {
 				return error('Expected opening bracket, found "${ch.ascii_str()}".')

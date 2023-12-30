@@ -114,6 +114,8 @@ pub fn (attributes Attributes) encode() EncodingNode {
 	}
 }
 
+// encode converts a PML node into an EncodingNode that is used to
+// generate well-formatted PML output.
 pub fn (node Node) encode() EncodingNode {
 	mut items := []EncodingNodeChild{cap: node.children.len}
 	if node.attributes.contents.len > 0 {
@@ -137,6 +139,7 @@ pub fn (node Node) encode() EncodingNode {
 	}
 }
 
+// size is a heuristic for the number of chatacters needed to encode the node.
 fn (node EncodingNode) size(config EncodingConfig) int {
 	mut size := node.prefix.len + node.suffix.len
 	for item in node.items {
@@ -220,6 +223,10 @@ fn (node EncodingNode) output(config EncodingConfig) string {
 	} else {
 		node.multi_line_output(content_size, config)
 	}
+}
+
+pub fn (attributes Attributes) output(config EncodingConfig) string {
+	return attributes.encode().output(config)
 }
 
 pub fn (comment Comment) str() string {

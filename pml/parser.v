@@ -24,16 +24,178 @@ pub fn PMLDoc.parse_reader(mut reader io.Reader) !PMLDoc {
 	}
 }
 
+enum AttributeParserState {
+	waiting_for_attribute_name
+	reading_attribute_name
+	waiting_for_equal_sign
+	waiting_for_attribute_value
+	reading_attribute_value
+}
+
 fn parse_attributes(mut reader io.Reader) !Attributes {
 	mut local_buf := [u8(0)]
+	mut current_state := AttributeParserState.waiting_for_attribute_name
+
+	mut attribute_name_buffer := strings.new_builder(pml.default_builder_length)
+	mut attribute_value_buffer := strings.new_builder(pml.default_builder_length)
+	mut attribute_children := []AttributeChild{}
+
 	for {
 		ch := next_char(mut reader, mut local_buf)!
 		match ch {
+			` `, `\t`, `\n` {
+				match current_state {
+					.waiting_for_attribute_name, .waiting_for_equal_sign,
+					.waiting_for_attribute_value {
+						// We skip whitespace
+					}
+					.reading_attribute_name {
+						// We are done reading the attribute name.
+						current_state = .waiting_for_equal_sign
+					}
+					.reading_attribute_value {
+						// We are done reading the attribute value.
+						name := attribute_name_buffer.str()
+						value := attribute_value_buffer.str()
+						attribute_children << AttributeChild(Attribute{
+							name: name
+							value: value
+						})
+						current_state = .waiting_for_attribute_name
+					}
+				}
+			}
+			`[` {
+				match current_state {
+					.waiting_for_attribute_name {
+						attribute_children << AttributeChild(parse_comment(mut reader)!)
+					}
+					else {
+						return error('Unexpected "[" while parsing attribute.')
+					}
+				}
+			}
 			`)` {
-				return Attributes{}
+				match current_state {
+					.waiting_for_attribute_name {
+						return error('Expected attribute name to follow immediately after opening bracket.')
+					}
+					.reading_attribute_name {
+						return error('Unexpected end of content while reading attribute name.')
+					}
+					.waiting_for_equal_sign {
+						return error('Expected "=" to follow immediately after attribute name.')
+					}
+					.waiting_for_attribute_value {
+						return error('Expected attribute value to follow immediately after "=".')
+					}
+					.reading_attribute_value {
+						// We are done reading the attribute value.
+						name := attribute_name_buffer.str()
+						value := attribute_value_buffer.str()
+						attribute_children << AttributeChild(Attribute{
+							name: name
+							value: value
+						})
+						return Attributes{
+							contents: attribute_children
+						}
+					}
+				}
+			}
+			`=` {
+				match current_state {
+					.waiting_for_attribute_name {
+						return error('Expected attribute name to follow immediately after opening bracket.')
+					}
+					.reading_attribute_name, .waiting_for_equal_sign {
+						current_state = .waiting_for_attribute_value
+					}
+					.waiting_for_attribute_value {
+						return error('Found "=" twice. Expected to find attribute value.')
+					}
+					.reading_attribute_value {
+						return error('Found "=" twice. Expected to find attribute name or comment.')
+					}
+				}
+			}
+			// TODO: Support quotes
+			else {
+				match current_state {
+					.waiting_for_attribute_name {
+						current_state = .reading_attribute_name
+						attribute_name_buffer.write_u8(ch)
+					}
+					.reading_attribute_name {
+						attribute_name_buffer.write_u8(ch)
+					}
+					.waiting_for_equal_sign {
+						return error('Expected "=" to follow immediately after attribute name.')
+					}
+					.waiting_for_attribute_value {
+						current_state = .reading_attribute_value
+						attribute_value_buffer.write_u8(ch)
+					}
+					.reading_attribute_value {
+						attribute_value_buffer.write_u8(ch)
+					}
+				}
+			}
+		}
+	}
+	return error('Unexpected end of content.')
+}
+
+enum CommentParserState {
+	found_dash
+	reading_comment
+}
+
+fn parse_comment(mut reader io.Reader) !Comment {
+	mut local_buf := [u8(0)]
+	mut comment_buffer := strings.new_builder(pml.default_builder_length)
+	mut children := []CommentChild{}
+
+	mut current_state := CommentParserState.found_dash
+	for {
+		ch := next_char(mut reader, mut local_buf)!
+		match ch {
+			`[` {
+				collected_content := comment_buffer.str().trim_space()
+				if collected_content.len > 0 {
+					children << CommentChild(collected_content)
+				}
+				children << parse_comment(mut reader)!
+				current_state = .reading_comment
+			}
+			`-` {
+				match current_state {
+					.found_dash {
+						current_state = .reading_comment
+						// Write the dash twice to the buffer.
+						comment_buffer.write_u8(ch)
+						comment_buffer.write_u8(ch)
+					}
+					.reading_comment {
+						current_state = .found_dash
+					}
+				}
+			}
+			`]` {
+				match current_state {
+					.found_dash {
+						children << CommentChild(comment_buffer.str().trim_space())
+						return Comment{
+							content: children
+						}
+					}
+					.reading_comment {
+						comment_buffer.write_u8(ch)
+					}
+				}
 			}
 			else {
-				// Skip
+				comment_buffer.write_u8(ch)
 			}
 		}
 	}
@@ -61,7 +223,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Node {
 	for {
 		ch := next_char(mut reader, mut local_buf)!
 		match ch {
-			` `, `\t`, `\n` {
+			` `, `\t` {
 				match current_state {
 					.waiting_for_node_name {
 						return error('Expected node name to follow immediately after opening bracket.')
@@ -75,6 +237,28 @@ fn parse_node_after_bracket(mut reader io.Reader) !Node {
 					}
 					.reading_child_string_content {
 						general_child_content.write_u8(ch)
+					}
+				}
+			}
+			`\n` {
+				match current_state {
+					.waiting_for_node_name {
+						return error('Expected node name to follow immediately after opening bracket.')
+					}
+					.reading_node_name {
+						// We are done reading the node name.
+						current_state = .waiting_for_attributes
+					}
+					.waiting_for_attributes, .waiting_for_child {
+						// We skip whitespace
+					}
+					.reading_child_string_content {
+						if general_child_content.len > 0 {
+							trimmed_content := general_child_content.str().trim_space()
+							if trimmed_content.len > 0 {
+								children << Child(trimmed_content)
+							}
+						}
 					}
 				}
 			}
@@ -106,7 +290,12 @@ fn parse_node_after_bracket(mut reader io.Reader) !Node {
 						current_state = .waiting_for_child
 					}
 					.reading_child_string_content {
-						children << Child(general_child_content.str().trim_space())
+						if general_child_content.len > 0 {
+							trimmed_content := general_child_content.str().trim_space()
+							if trimmed_content.len > 0 {
+								children << Child(trimmed_content)
+							}
+						}
 						children << parse_node_after_bracket(mut reader)!
 						current_state = .waiting_for_child
 					}
@@ -117,15 +306,20 @@ fn parse_node_after_bracket(mut reader io.Reader) !Node {
 					.waiting_for_node_name {
 						return error('Expected node name to follow immediately after opening bracket.')
 					}
-					.reading_node_name, .waiting_for_attributes, .waiting_for_child {
+					.reading_node_name, .waiting_for_attributes {
 						// We encountered an empty node.
 						return Node{
 							name: name_buffer.str()
 							attributes: attributes
 						}
 					}
-					.reading_child_string_content {
-						children << Child(general_child_content.str().trim_space())
+					.waiting_for_child, .reading_child_string_content {
+						if general_child_content.len > 0 {
+							trimmed_content := general_child_content.str().trim_space()
+							if trimmed_content.len > 0 {
+								children << Child(trimmed_content)
+							}
+						}
 						return Node{
 							name: name_buffer.str()
 							attributes: attributes
@@ -137,8 +331,13 @@ fn parse_node_after_bracket(mut reader io.Reader) !Node {
 			else {
 				match current_state {
 					.waiting_for_node_name {
-						current_state = .reading_node_name
-						name_buffer.write_u8(ch)
+						if ch == `-` {
+							// We found the start of a comment
+							children << Child(parse_comment(mut reader)!)
+						} else {
+							current_state = .reading_node_name
+							name_buffer.write_u8(ch)
+						}
 					}
 					.reading_node_name {
 						name_buffer.write_u8(ch)

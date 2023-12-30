@@ -26,11 +26,13 @@ pub fn (attributes Attributes) == (other Attributes) bool {
 }
 
 pub struct Node {
+pub:
 	name       string     @[required]
 	attributes Attributes
 	children   []Child
 }
 
 pub struct PMLDoc {
+pub:
 	root Node
 }

@@ -74,8 +74,8 @@ struct EncodingNode {
 }
 
 pub fn (comment Comment) encode() EncodingNode {
-	mut items := []EncodingNodeChild{cap: comment.content.len}
-	for child in comment.content {
+	mut items := []EncodingNodeChild{cap: comment.children.len}
+	for child in comment.children {
 		items << match child {
 			Comment {
 				EncodingNodeChild(child.encode())
@@ -94,14 +94,13 @@ pub fn (comment Comment) encode() EncodingNode {
 }
 
 pub fn (attributes Attributes) encode() EncodingNode {
-	mut items := []EncodingNodeChild{cap: attributes.contents.len}
-	for content in attributes.contents {
+	mut items := []EncodingNodeChild{cap: attributes.children.len}
+	for content in attributes.children {
 		items << match content {
 			Comment {
 				EncodingNodeChild(content.encode())
 			}
 			Attribute {
-				dump(content)
 				EncodingNodeChild(optionally_quote(content.name) + ' = ' +
 					optionally_quote(content.value))
 			}
@@ -119,7 +118,7 @@ pub fn (attributes Attributes) encode() EncodingNode {
 // generate well-formatted PML output.
 pub fn (node Node) encode() EncodingNode {
 	mut items := []EncodingNodeChild{cap: node.children.len}
-	if node.attributes.contents.len > 0 {
+	if node.attributes.children.len > 0 {
 		items << node.attributes.encode()
 	}
 	for child in node.children {
@@ -227,9 +226,7 @@ fn (node EncodingNode) output(config EncodingConfig) string {
 }
 
 pub fn (attributes Attributes) output(config EncodingConfig) string {
-	encoding := attributes.encode()
-	dump(encoding)
-	return encoding.output(config)
+	return attributes.encode().output(config)
 }
 
 pub fn (comment Comment) str() string {

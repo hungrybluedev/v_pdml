@@ -20,7 +20,7 @@ fn test_non_empty_nodes() {
 		pml.Node{
 			name: 'image'
 			attributes: pml.Attributes{
-				contents: [
+				children: [
 					pml.Attribute{
 						name: 'source'
 						value: 'strawberries.jpg'
@@ -61,14 +61,14 @@ fn test_non_empty_nodes() {
 fn test_comment() {
 	comments := [
 		pml.Comment{
-			content: ['This is a comment.']
+			children: ['This is a comment.']
 		},
 		pml.Comment{
-			content: ['This is a comment.', 'This is another comment.']
+			children: ['This is a comment.', 'This is another comment.']
 		},
 		pml.Comment{
-			content: ['Text', pml.Comment{
-				content: ['More text.']
+			children: ['Text', pml.Comment{
+				children: ['More text.']
 			}]
 		},
 	]
@@ -124,13 +124,13 @@ fn test_attributes() {
 	sample_node := pml.Node{
 		name: 'test'
 		attributes: pml.Attributes{
-			contents: [
+			children: [
 				pml.Attribute{
 					name: 'title'
 					value: 'A planet'
 				},
 				pml.Comment{
-					content: ['size in mm']
+					children: ['size in mm']
 				},
 				pml.Attribute{
 					name: 'width'
@@ -167,7 +167,7 @@ fn test_quoted_value_attributes() {
 	sample_node := pml.Node{
 		name: 'test'
 		attributes: pml.Attributes{
-			contents: [
+			children: [
 				pml.Attribute{
 					name: 'colour'
 					value: '"yellow"'
@@ -260,7 +260,7 @@ fn test_medium_document() {
 						pml.Node{
 							name: 'image'
 							attributes: pml.Attributes{
-								contents: [
+								children: [
 									pml.Attribute{
 										name: 'source'
 										value: 'images/strawberries.jpg'

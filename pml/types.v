@@ -5,7 +5,7 @@ pub type Child = Comment | Node | string
 pub type CommentChild = Comment | string
 
 pub struct Comment {
-	content []CommentChild
+	children []CommentChild
 }
 
 pub type AttributeChild = Attribute | Comment
@@ -16,13 +16,13 @@ pub struct Attribute {
 }
 
 pub struct Attributes {
-	contents []AttributeChild
+	children []AttributeChild
 }
 
 pub fn (attributes Attributes) == (other Attributes) bool {
 	// TODO: Handle cases when attributes are out of order
 	// TODO: Decide hadling of comments in attributes
-	return attributes.contents == other.contents
+	return attributes.children == other.children
 }
 
 pub struct Node {

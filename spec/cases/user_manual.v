@@ -175,5 +175,31 @@ More text]'
 				}
 			}
 		},
+		PMLTestCase{
+			name: 'Fifth Example'
+			desc: 'Empty attribute list.'
+			input: '[div () text]'
+			expected: pml.PMLDoc{
+				root: pml.Node{
+					name: 'div'
+					children: [
+						'text',
+					]
+				}
+			}
+		},
+		PMLTestCase{
+			name: 'Sixth Example'
+			desc: 'Node with children having text starting with parentheses.'
+			input: '[i() (organic = healthy)]'
+			expected: pml.PMLDoc{
+				root: pml.Node{
+					name: 'i'
+					children: [
+						'(organic = healthy)',
+					]
+				}
+			}
+		},
 	]
 }

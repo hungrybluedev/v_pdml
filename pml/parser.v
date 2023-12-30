@@ -6,6 +6,7 @@ import strings
 
 const default_builder_length = 16
 
+// PMLDoc.parse_string attempts to parse the given string as a PML document.
 pub fn PMLDoc.parse_string(content string) !PMLDoc {
 	mut reader := FullBufferReader{
 		contents: content.bytes()
@@ -13,17 +14,20 @@ pub fn PMLDoc.parse_string(content string) !PMLDoc {
 	return PMLDoc.parse_reader(mut reader)
 }
 
+// PMLDoc.parse_file attempts to parse the given file as a PML document.
 pub fn PMLDoc.parse_file(path string) !PMLDoc {
 	mut file_reader := os.open(path) or { return error('Failed to open "${path}" for reading.') }
 	return PMLDoc.parse_reader(mut file_reader)
 }
 
+// PMLDoc.parse_reader attempts to parse the contents from the reader interface as a PML document.
 pub fn PMLDoc.parse_reader(mut reader io.Reader) !PMLDoc {
 	return PMLDoc{
 		root: parse_single_node(mut reader)!
 	}
 }
 
+// AttributeParserState is an enum that lists all of the possible states that the attribute parser can be in.
 enum AttributeParserState {
 	waiting_for_attribute_name
 	reading_attribute_name
@@ -80,7 +84,12 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 			`)` {
 				match current_state {
 					.reading_attribute_name {
-						return error('Unexpected end of content while reading attribute name.')
+						if attribute_children.len > 0 || attribute_name_buffer.len > 0 {
+							return error('Unexpected ")" while reading attribute name.')
+						} else {
+							// Empty attribute list.
+							return Attributes{}
+						}
 					}
 					.waiting_for_equal_sign {
 						return error('Expected "=" to follow immediately after attribute name.')
@@ -353,6 +362,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 						// We are done reading the node name. We found the start of the attributes
 						// so we can parse immediately.
 						attributes = parse_attributes(mut reader)!
+						current_state = .waiting_for_child
 					}
 					.waiting_for_child, .reading_child_string_content {
 						// Consider this to be part of the general child content.

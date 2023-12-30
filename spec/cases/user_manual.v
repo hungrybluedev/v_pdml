@@ -102,5 +102,28 @@ pub const user_manual = PMLTestSuite{
 				}
 			}
 		},
+		PMLTestCase{
+			name: 'Third Example'
+			desc: 'Paragraph with quoted attribute.'
+			input: '[p (html_style = "color:red; border:1px dashed blue")
+    It is important to note that ...
+]'
+			expected: PMLDoc{
+				root: Node{
+					name: 'p'
+					attributes: Attributes{
+						contents: [
+							Attribute{
+								name: 'html_style'
+								value: 'color:red; border:1px dashed blue'
+							},
+						]
+					}
+					children: [
+						'It is important to note that ...',
+					]
+				}
+			}
+		},
 	]
 }

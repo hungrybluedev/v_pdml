@@ -57,10 +57,12 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 						// We are done reading the attribute value.
 						name := attribute_name_buffer.str()
 						value := attribute_value_buffer.str()
-						attribute_children << AttributeChild(Attribute{
-							name: name
-							value: value
-						})
+						if name.len > 0 && value.len > 0 {
+							attribute_children << AttributeChild(Attribute{
+								name: name
+								value: value
+							})
+						}
 						current_state = .waiting_for_attribute_name
 					}
 				}
@@ -77,9 +79,6 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 			}
 			`)` {
 				match current_state {
-					.waiting_for_attribute_name {
-						return error('Expected attribute name to follow immediately after opening bracket.')
-					}
 					.reading_attribute_name {
 						return error('Unexpected end of content while reading attribute name.')
 					}
@@ -89,14 +88,16 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 					.waiting_for_attribute_value {
 						return error('Expected attribute value to follow immediately after "=".')
 					}
-					.reading_attribute_value {
+					.waiting_for_attribute_name, .reading_attribute_value {
 						// We are done reading the attribute value.
 						name := attribute_name_buffer.str()
 						value := attribute_value_buffer.str()
-						attribute_children << AttributeChild(Attribute{
-							name: name
-							value: value
-						})
+						if name.len > 0 && value.len > 0 {
+							attribute_children << AttributeChild(Attribute{
+								name: name
+								value: value
+							})
+						}
 						return Attributes{
 							contents: attribute_children
 						}
@@ -119,7 +120,60 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 					}
 				}
 			}
-			// TODO: Support quotes
+			`'`, `"` {
+				// This is guaranteed to be the start of a quoted string.
+				// We process it until we find the end.
+				match current_state {
+					.reading_attribute_name {
+						return error('Unexpected start of quoted string while reading attribute name.')
+					}
+					.reading_attribute_value {
+						return error('Unexpected start of quoted string while reading attribute value.')
+					}
+					.waiting_for_equal_sign {
+						return error('Expected "=" to follow immediately after attribute name.')
+					}
+					.waiting_for_attribute_name {
+						current_state = .reading_attribute_name
+						for {
+							inner_ch := next_char(mut reader, mut local_buf)!
+							match inner_ch {
+								ch {
+									// We found the end of the quoted string.
+									current_state = .waiting_for_equal_sign
+									break
+								}
+								else {
+									attribute_name_buffer.write_u8(inner_ch)
+								}
+							}
+						}
+					}
+					.waiting_for_attribute_value {
+						current_state = .reading_attribute_value
+						for {
+							inner_ch := next_char(mut reader, mut local_buf)!
+							match inner_ch {
+								ch {
+									current_state = .waiting_for_attribute_name
+									name := attribute_name_buffer.str()
+									value := attribute_value_buffer.str()
+									if name.len > 0 && value.len > 0 {
+										attribute_children << AttributeChild(Attribute{
+											name: name
+											value: value
+										})
+									}
+									break
+								}
+								else {
+									attribute_value_buffer.write_u8(inner_ch)
+								}
+							}
+						}
+					}
+				}
+			}
 			else {
 				match current_state {
 					.waiting_for_attribute_name {

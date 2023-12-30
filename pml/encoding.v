@@ -101,6 +101,7 @@ pub fn (attributes Attributes) encode() EncodingNode {
 				EncodingNodeChild(content.encode())
 			}
 			Attribute {
+				dump(content)
 				EncodingNodeChild(optionally_quote(content.name) + ' = ' +
 					optionally_quote(content.value))
 			}
@@ -226,7 +227,9 @@ fn (node EncodingNode) output(config EncodingConfig) string {
 }
 
 pub fn (attributes Attributes) output(config EncodingConfig) string {
-	return attributes.encode().output(config)
+	encoding := attributes.encode()
+	dump(encoding)
+	return encoding.output(config)
 }
 
 pub fn (comment Comment) str() string {

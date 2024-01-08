@@ -201,5 +201,27 @@ More text]'
 				}
 			}
 		},
+		PMLTestCase{
+			name: 'Seventh Example'
+			desc: 'Node with no children and no parentheses around attributes.'
+			input: '[image source="images/juicy apple.png" width=400]'
+			expected: pml.PMLDoc{
+				root: pml.Node{
+					name: 'image'
+					attributes: pml.Attributes{
+						children: [
+							pml.Attribute{
+								name: 'source'
+								value: 'images/juicy apple.png'
+							},
+							pml.Attribute{
+								name: 'width'
+								value: '400'
+							},
+						]
+					}
+				}
+			}
+		},
 	]
 }

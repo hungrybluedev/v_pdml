@@ -5,6 +5,7 @@ import os
 import strings
 
 const default_builder_length = 16
+const nodes_without_children = ['image']
 
 // PMLDoc.parse_string attempts to parse the given string as a PML document.
 pub fn PMLDoc.parse_string(content string) !PMLDoc {
@@ -36,7 +37,7 @@ enum AttributeParserState {
 	reading_attribute_value
 }
 
-fn parse_attributes(mut reader io.Reader) !Attributes {
+fn parse_attributes(mut reader io.Reader, skipped_parenthesis bool) !Attributes {
 	mut local_buf := [u8(0)]
 	mut current_state := AttributeParserState.waiting_for_attribute_name
 
@@ -59,7 +60,7 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 					}
 					.reading_attribute_value {
 						// We are done reading the attribute value.
-						name := attribute_name_buffer.str()
+						name := attribute_name_buffer.str().all_after_first('(')
 						value := attribute_value_buffer.str()
 						if name.len > 0 && value.len > 0 {
 							attribute_children << AttributeChild(Attribute{
@@ -81,7 +82,10 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 					}
 				}
 			}
-			`)` {
+			`]`, `)` {
+				if ch == `]` && !skipped_parenthesis {
+					return error('Unexpected "]" while parsing attribute.')
+				}
 				match current_state {
 					.reading_attribute_name {
 						if attribute_children.len > 0 || attribute_name_buffer.len > 0 {
@@ -99,7 +103,7 @@ fn parse_attributes(mut reader io.Reader) !Attributes {
 					}
 					.waiting_for_attribute_name, .reading_attribute_value {
 						// We are done reading the attribute value.
-						name := attribute_name_buffer.str()
+						name := attribute_name_buffer.str().all_after_first('(')
 						value := attribute_value_buffer.str()
 						if name.len > 0 && value.len > 0 {
 							attribute_children << AttributeChild(Attribute{
@@ -309,7 +313,19 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 						return error('Expected node name to follow immediately after opening bracket.')
 					}
 					.reading_node_name {
+						tag_name := name_buffer.str()
+						if tag_name.to_lower() in pml.nodes_without_children {
+							// We do not need to wait for '(' to start parsing attributes.
+							attributes = parse_attributes(mut reader, true)!
+							return Node{
+								name: tag_name
+								attributes: attributes
+							}
+						}
 						// We are done reading the node name.
+						// Restore the tag name.
+						name_buffer = strings.new_builder(pml.default_builder_length)
+						name_buffer.write_string(tag_name)
 						current_state = .waiting_for_attributes
 					}
 					.waiting_for_attributes, .waiting_for_child {
@@ -361,7 +377,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 					.reading_node_name, .waiting_for_attributes {
 						// We are done reading the node name. We found the start of the attributes
 						// so we can parse immediately.
-						attributes = parse_attributes(mut reader)!
+						attributes = parse_attributes(mut reader, false)!
 						current_state = .waiting_for_child
 					}
 					.waiting_for_child, .reading_child_string_content {

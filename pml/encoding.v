@@ -234,7 +234,17 @@ pub fn (comment Comment) str() string {
 }
 
 pub fn (node Node) str() string {
-	return node.encode().output()
+	return match node.name.to_lower() {
+		'sp' {
+			' '
+		}
+		'nl' {
+			'\n'
+		}
+		else {
+			node.encode().output()
+		}
+	}
 }
 
 pub fn (doc PMLDoc) str() string {

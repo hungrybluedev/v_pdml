@@ -118,6 +118,7 @@ pub fn (attributes Attributes) encode() EncodingNode {
 // generate well-formatted PML output.
 pub fn (node Node) encode() EncodingNode {
 	mut items := []EncodingNodeChild{cap: node.children.len}
+	is_monospace := node.name.to_lower() == 'monospace'
 	if node.attributes.children.len > 0 {
 		items << node.attributes.encode()
 	}
@@ -127,7 +128,11 @@ pub fn (node Node) encode() EncodingNode {
 				EncodingNodeChild(child.encode())
 			}
 			string {
-				EncodingNodeChild(escape_plaintext(child.trim_space()))
+				if is_monospace {
+					EncodingNodeChild(child)
+				} else {
+					EncodingNodeChild(escape_plaintext(child.trim_space()))
+				}
 			}
 		}
 	}
@@ -234,17 +239,7 @@ pub fn (comment Comment) str() string {
 }
 
 pub fn (node Node) str() string {
-	return match node.name.to_lower() {
-		'sp' {
-			' '
-		}
-		'nl' {
-			'\n'
-		}
-		else {
-			node.encode().output()
-		}
-	}
+	return node.encode().output()
 }
 
 pub fn (doc PMLDoc) str() string {

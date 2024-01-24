@@ -304,17 +304,25 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 	mut attributes := Attributes{}
 	mut children := []Child{}
 
+	mut reading_monospace := false
+
 	for {
 		ch := next_char(mut reader, mut local_buf)!
 		match ch {
 			` `, `\t` {
+				if reading_monospace {
+					general_child_content.write_u8(ch)
+					continue
+				}
 				match current_state {
 					.waiting_for_node_name {
 						return error('Expected node name to follow immediately after opening bracket.')
 					}
 					.reading_node_name {
-						tag_name := name_buffer.str()
-						if tag_name.to_lower() in pml.nodes_without_children {
+						tag_name := name_buffer.str().to_lower()
+						if tag_name == 'monospace' {
+							reading_monospace = true
+						} else if tag_name in pml.nodes_without_children {
 							// We do not need to wait for '(' to start parsing attributes.
 							attributes = parse_attributes(mut reader, true)!
 							return Node{
@@ -348,6 +356,32 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 				}
 			}
 			`\n` {
+				if reading_monospace {
+					general_child_content.write_u8(ch)
+					continue
+				}
+				if children.len == 0 {
+					tag_name := name_buffer.str().to_lower()
+					if tag_name == 'monospace' {
+						reading_monospace = true
+					} else if tag_name in pml.nodes_without_children {
+						// We do not need to wait for '(' to start parsing attributes.
+						attributes = parse_attributes(mut reader, true)!
+						return Node{
+							name: tag_name
+							attributes: attributes
+						}
+					}
+					// We are done reading the node name.
+					// Restore the tag name.
+					name_buffer = strings.new_builder(pml.default_builder_length)
+					name_buffer.write_string(tag_name)
+					current_state = .reading_child_string_content
+					if reading_monospace {
+						general_child_content.write_u8(ch)
+						continue
+					}
+				}
 				match current_state {
 					.waiting_for_node_name {
 						return error('Expected node name to follow immediately after opening bracket.')
@@ -361,9 +395,13 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 					}
 					.reading_child_string_content {
 						if general_child_content.len > 0 {
-							trimmed_content := general_child_content.str().trim_space()
-							if trimmed_content.len > 0 {
-								children << Child(trimmed_content)
+							if reading_monospace {
+								children << Child(general_child_content.str())
+							} else {
+								trimmed_content := general_child_content.str().trim_space()
+								if trimmed_content.len > 0 {
+									children << Child(trimmed_content)
+								}
 							}
 						}
 					}
@@ -414,18 +452,22 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 					.waiting_for_node_name {
 						return error('Expected node name to follow immediately after opening bracket.')
 					}
-					.reading_node_name, .waiting_for_attributes {
+					.reading_node_name {
 						// We encountered an empty node.
 						return Node{
 							name: name_buffer.str()
 							attributes: attributes
 						}
 					}
-					.waiting_for_child, .reading_child_string_content {
+					.waiting_for_attributes, .waiting_for_child, .reading_child_string_content {
 						if general_child_content.len > 0 {
-							trimmed_content := general_child_content.str().trim_space()
-							if trimmed_content.len > 0 {
-								children << Child(trimmed_content)
+							if reading_monospace {
+								children << Child(general_child_content.str())
+							} else {
+								trimmed_content := general_child_content.str().trim_space()
+								if trimmed_content.len > 0 {
+									children << Child(trimmed_content)
+								}
 							}
 						}
 						return Node{
@@ -435,6 +477,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 						}
 					}
 				}
+				reading_monospace = false
 			}
 			else {
 				match current_state {

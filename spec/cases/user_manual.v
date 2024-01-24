@@ -40,17 +40,17 @@ pub const user_manual = PMLTestSuite{
 			name: 'Second Example'
 			desc: 'Example with a document, title, and a list.'
 			input: '
-				[doc [title PML Document Example]
-				    [ch [title Chapter 1]
-				        Text of paragraph 1.
-				        Text of paragraph 2.
-				        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-				    ]
-				    [ch [title Chapter 2]
-				        Paragraph
-				        [image (source = images/strawberries.jpg)]
-				    ]
-				]'
+						[doc [title PML Document Example]
+						    [ch [title Chapter 1]
+						        Text of paragraph 1.
+						        Text of paragraph 2.
+						        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+						    ]
+						    [ch [title Chapter 2]
+						        Paragraph
+						        [image (source = images/strawberries.jpg)]
+						    ]
+						]'
 			expected: pml.PMLDoc{
 				root: pml.Node{
 					name: 'doc'
@@ -106,8 +106,8 @@ pub const user_manual = PMLTestSuite{
 			name: 'Third Example'
 			desc: 'Paragraph with quoted attribute.'
 			input: '[p (html_style = "color:red; border:1px dashed blue")
-		    It is important to note that ...
-		]'
+				    It is important to note that ...
+				]'
 			expected: pml.PMLDoc{
 				root: pml.Node{
 					name: 'p'
@@ -129,18 +129,16 @@ pub const user_manual = PMLTestSuite{
 			name: 'Fourth Example'
 			desc: 'Text and multiple comments, some nested.'
 			input: '[sample
-This is [- good -] awesome.
-[- TODO: explain why -]
-
-Text
-[-
-    This [i bad] text not show.
-    [- a
-        nested
-        comment -]
--]
-
-More text]'
+		This is [- good -] awesome.
+		[- TODO: explain why -]
+		Text
+		[-
+		    This [i bad] text not show.
+		    [- a
+		        nested
+		        comment -]
+		-]
+		More text]'
 			expected: pml.PMLDoc{
 				root: pml.Node{
 					name: 'sample'
@@ -220,6 +218,43 @@ More text]'
 							},
 						]
 					}
+				}
+			}
+		},
+		PMLTestCase{
+			name: 'Eighth Example'
+			desc: 'Simple monospace node with text.'
+			input: '[sample
+		[header A Pascal Triangle]
+		[monospace
+              1
+            1   1
+          1   2   1
+        1   3   3   1
+		]
+		]'
+			expected: pml.PMLDoc{
+				root: pml.Node{
+					name: 'sample'
+					children: [
+						pml.Node{
+							name: 'header'
+							children: [
+								'A Pascal Triangle',
+							]
+						},
+						pml.Node{
+							name: 'monospace'
+							children: [
+								'
+              1
+            1   1
+          1   2   1
+        1   3   3   1
+		',
+							]
+						},
+					]
 				}
 			}
 		},

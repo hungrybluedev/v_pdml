@@ -72,5 +72,5 @@ with me.
 
 [![Book a call](https://img.shields.io/badge/Book%20a%20call-Consulting-blue?style=plastic)](https://tidycal.com/hungrybluedev)
 
-[1]: https://pml-lang.dev/index.html
+[1]: https://pdml-lang.dev/index.html
 [2]: https://github.com/vlang/v/?tab=readme-ov-file#installing-v-from-source

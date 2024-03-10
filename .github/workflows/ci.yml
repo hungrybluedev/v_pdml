@@ -1,0 +1,50 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 0 * * 4"
+
+jobs:
+  code-quality:
+    strategy:
+      fail-fast: false
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Latest V
+        uses: actions/checkout@v4
+        with:
+          repository: vlang/v
+          path: v
+
+      - name: Checkout the PDML module
+        uses: actions/checkout@v4
+        with:
+          path: v_pdml
+
+      - name: Build V
+        run: |
+          cd v && make
+          ./v symlink -githubci && git clone ../v_pdml/ ~/.vmodules/v_pdml
+
+      - name: Run tests
+        run: cd v_pdml && v test .
+
+      - name: Ensure code is formatted
+        run: cd v_pdml && v fmt -verify .
+
+      - name: Ensure documentation is OK
+        run: cd v_pdml && v check-md .
+
+      - name: Ensure all examples compile
+        run: cd v_pdml && v should-compile-all examples/
+
+      - name: Ensure first example can run from an arbitrary working folder
+        run: v_pdml/examples/01_from_string/example
+
+      - name: Ensure seconf example can run from an arbitrary working folder
+        run: v_pdml/examples/02_from_file/example

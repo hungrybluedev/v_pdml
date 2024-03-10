@@ -43,5 +43,5 @@ jobs:
       - name: Ensure first example can run from an arbitrary working folder
         run: v_pdml/examples/01_from_string/example
 
-      - name: Ensure seconf example can run from an arbitrary working folder
+      - name: Ensure second example can run from an arbitrary working folder
         run: v_pdml/examples/02_from_file/example

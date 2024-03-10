@@ -55,8 +55,8 @@ Check the **examples** directory for more examples.
 
 ## Acknowledgements
 
-I would like to thank Christian Neumanns (@pdml-lang) for creating the PDML and PML standard and for his
-help in the development of this module.
+I would like to thank Christian Neumanns (@pdml-lang) for creating the PDML and PML standard
+and for his help in the development of this module.
 
 ## License
 

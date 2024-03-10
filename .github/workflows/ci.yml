@@ -15,11 +15,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Latest V
-        uses: actions/checkout@v4
-        with:
-          repository: vlang/v
-          path: v
+      - name: Obtain V from the official repository
+        run: git clone https://github.com/vlang/v v --depth 1
 
       - name: Checkout the PDML module
         uses: actions/checkout@v4

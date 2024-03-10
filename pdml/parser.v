@@ -1,4 +1,4 @@
-module pml
+module pdml
 
 import io
 import os
@@ -7,23 +7,23 @@ import strings
 const default_builder_length = 16
 const nodes_without_children = ['image']
 
-// PMLDoc.parse_string attempts to parse the given string as a PML document.
-pub fn PMLDoc.parse_string(content string) !PMLDoc {
+// Document.parse_string attempts to parse the given string as a PML document.
+pub fn Document.parse_string(content string) !Document {
 	mut reader := FullBufferReader{
 		contents: content.bytes()
 	}
-	return PMLDoc.parse_reader(mut reader)
+	return Document.parse_reader(mut reader)
 }
 
-// PMLDoc.parse_file attempts to parse the given file as a PML document.
-pub fn PMLDoc.parse_file(path string) !PMLDoc {
+// Document.parse_file attempts to parse the given file as a PML document.
+pub fn Document.parse_file(path string) !Document {
 	mut file_reader := os.open(path) or { return error('Failed to open "${path}" for reading.') }
-	return PMLDoc.parse_reader(mut file_reader)
+	return Document.parse_reader(mut file_reader)
 }
 
-// PMLDoc.parse_reader attempts to parse the contents from the reader interface as a PML document.
-pub fn PMLDoc.parse_reader(mut reader io.Reader) !PMLDoc {
-	return PMLDoc{
+// Document.parse_reader attempts to parse the contents from the reader interface as a PML document.
+pub fn Document.parse_reader(mut reader io.Reader) !Document {
+	return Document{
 		root: parse_single_node(mut reader)!
 	}
 }
@@ -41,8 +41,8 @@ fn parse_attributes(mut reader io.Reader, skipped_parenthesis bool) !Attributes 
 	mut local_buf := [u8(0)]
 	mut current_state := AttributeParserState.waiting_for_attribute_name
 
-	mut attribute_name_buffer := strings.new_builder(pml.default_builder_length)
-	mut attribute_value_buffer := strings.new_builder(pml.default_builder_length)
+	mut attribute_name_buffer := strings.new_builder(pdml.default_builder_length)
+	mut attribute_value_buffer := strings.new_builder(pdml.default_builder_length)
 	mut attribute_children := []AttributeChild{}
 
 	for {
@@ -220,7 +220,7 @@ enum CommentParserState {
 
 fn parse_comment(mut reader io.Reader) !Comment {
 	mut local_buf := [u8(0)]
-	mut comment_buffer := strings.new_builder(pml.default_builder_length)
+	mut comment_buffer := strings.new_builder(pdml.default_builder_length)
 	mut children := []CommentChild{}
 
 	mut current_state := CommentParserState.found_dash
@@ -298,8 +298,8 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 	mut local_buf := [u8(0)]
 	mut current_state := NodeParserState.waiting_for_node_name
 
-	mut name_buffer := strings.new_builder(pml.default_builder_length)
-	mut general_child_content := strings.new_builder(pml.default_builder_length)
+	mut name_buffer := strings.new_builder(pdml.default_builder_length)
+	mut general_child_content := strings.new_builder(pdml.default_builder_length)
 
 	mut attributes := Attributes{}
 	mut children := []Child{}
@@ -322,7 +322,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 						tag_name := name_buffer.str().to_lower()
 						if tag_name == 'monospace' {
 							reading_monospace = true
-						} else if tag_name in pml.nodes_without_children {
+						} else if tag_name in pdml.nodes_without_children {
 							// We do not need to wait for '(' to start parsing attributes.
 							attributes = parse_attributes(mut reader, true)!
 							return Node{
@@ -332,7 +332,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 						}
 						// We are done reading the node name.
 						// Restore the tag name.
-						name_buffer = strings.new_builder(pml.default_builder_length)
+						name_buffer = strings.new_builder(pdml.default_builder_length)
 						name_buffer.write_string(tag_name)
 						current_state = .waiting_for_attributes
 					}
@@ -364,7 +364,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 					tag_name := name_buffer.str().to_lower()
 					if tag_name == 'monospace' {
 						reading_monospace = true
-					} else if tag_name in pml.nodes_without_children {
+					} else if tag_name in pdml.nodes_without_children {
 						// We do not need to wait for '(' to start parsing attributes.
 						attributes = parse_attributes(mut reader, true)!
 						return Node{
@@ -374,7 +374,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 					}
 					// We are done reading the node name.
 					// Restore the tag name.
-					name_buffer = strings.new_builder(pml.default_builder_length)
+					name_buffer = strings.new_builder(pdml.default_builder_length)
 					name_buffer.write_string(tag_name)
 					current_state = .reading_child_string_content
 					if reading_monospace {

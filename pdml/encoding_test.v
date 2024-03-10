@@ -1,9 +1,9 @@
 module main
 
-import pml
+import pdml
 
 fn test_empty_node() {
-	node := pml.Node{
+	node := pdml.Node{
 		name: 'nl'
 	}
 	assert node.str() == '[nl]'
@@ -11,31 +11,31 @@ fn test_empty_node() {
 
 fn test_non_empty_nodes() {
 	nodes := [
-		pml.Node{
+		pdml.Node{
 			name: 'i'
 			children: [
 				'huge',
 			]
 		},
-		pml.Node{
+		pdml.Node{
 			name: 'image'
-			attributes: pml.Attributes{
+			attributes: pdml.Attributes{
 				children: [
-					pml.Attribute{
+					pdml.Attribute{
 						name: 'source'
 						value: 'strawberries.jpg'
 					},
 				]
 			}
 		},
-		pml.Node{
+		pdml.Node{
 			name: 'div'
 			children: [
 				'A ',
-				pml.Node{
+				pdml.Node{
 					name: 'i'
 					children: [
-						pml.Node{
+						pdml.Node{
 							name: 'b'
 							children: [
 								'nice',
@@ -60,14 +60,14 @@ fn test_non_empty_nodes() {
 
 fn test_comment() {
 	comments := [
-		pml.Comment{
+		pdml.Comment{
 			children: ['This is a comment.']
 		},
-		pml.Comment{
+		pdml.Comment{
 			children: ['This is a comment.', 'This is another comment.']
 		},
-		pml.Comment{
-			children: ['Text', pml.Comment{
+		pdml.Comment{
+			children: ['Text', pdml.Comment{
 				children: ['More text.']
 			}]
 		},
@@ -84,25 +84,25 @@ fn test_comment() {
 
 fn test_common_elements() {
 	sample_texts := [
-		pml.Node{
+		pdml.Node{
 			name: 'text'
 			children: [
 				'Bob',
 			]
 		},
-		pml.Node{
+		pdml.Node{
 			name: 'text'
 			children: [
 				'3.14',
 			]
 		},
-		pml.Node{
+		pdml.Node{
 			name: 'text'
 			children: [
 				'We want simplicity.',
 			]
 		},
-		pml.Node{
+		pdml.Node{
 			name: 'text'
 			children: [
 				'root\\config["port"]',
@@ -121,30 +121,30 @@ fn test_common_elements() {
 }
 
 fn test_attributes() {
-	sample_node := pml.Node{
+	sample_node := pdml.Node{
 		name: 'test'
-		attributes: pml.Attributes{
+		attributes: pdml.Attributes{
 			children: [
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'title'
 					value: 'A planet'
 				},
-				pml.Comment{
+				pdml.Comment{
 					children: ['size in mm']
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'width'
 					value: '400'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'height'
 					value: '248'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'path1'
 					value: '/root/foo/bar'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'path2'
 					value: 'C:\\\\config.txt'
 				},
@@ -164,43 +164,43 @@ fn test_attributes() {
 }
 
 fn test_quoted_value_attributes() {
-	sample_node := pml.Node{
+	sample_node := pdml.Node{
 		name: 'test'
-		attributes: pml.Attributes{
+		attributes: pdml.Attributes{
 			children: [
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'colour'
 					value: '"yellow"'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'colour'
 					value: '"light yellow"'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'path'
 					value: '"/root/foo/bar"'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'path'
 					value: '"C:\\\\config.txt"'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'list'
 					value: '"list[3]"'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'list'
 					value: '"list\\[3\\]"'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'quote'
 					value: '"He said\n\\"That\'s ok\\""'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'quote'
 					value: '"Tim\nTom\nTam"'
 				},
-				pml.Attribute{
+				pdml.Attribute{
 					name: 'empty'
 					value: '""'
 				},
@@ -223,20 +223,20 @@ fn test_quoted_value_attributes() {
 }
 
 fn test_medium_document() {
-	sample_doc := pml.PMLDoc{
-		root: pml.Node{
+	sample_doc := pdml.Document{
+		root: pdml.Node{
 			name: 'doc'
 			children: [
-				pml.Node{
+				pdml.Node{
 					name: 'title'
 					children: [
 						'PML Document Example',
 					]
 				},
-				pml.Node{
+				pdml.Node{
 					name: 'ch'
 					children: [
-						pml.Node{
+						pdml.Node{
 							name: 'title'
 							children: [
 								'Chapter 1',
@@ -247,21 +247,21 @@ fn test_medium_document() {
 						'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
 					]
 				},
-				pml.Node{
+				pdml.Node{
 					name: 'ch'
 					children: [
-						pml.Node{
+						pdml.Node{
 							name: 'title'
 							children: [
 								'Chapter 2',
 							]
 						},
 						'Paragraph',
-						pml.Node{
+						pdml.Node{
 							name: 'image'
-							attributes: pml.Attributes{
+							attributes: pdml.Attributes{
 								children: [
-									pml.Attribute{
+									pdml.Attribute{
 										name: 'source'
 										value: 'images/strawberries.jpg'
 									},

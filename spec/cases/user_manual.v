@@ -1,7 +1,7 @@
 module cases
 
 import spec { PMLTestCase, PMLTestSuite }
-import pml
+import pdml
 
 pub const user_manual = PMLTestSuite{
 	name: 'User Manual Test Cases'
@@ -14,18 +14,18 @@ pub const user_manual = PMLTestSuite{
 				[doc [title First test]
 					This is a [i simple] example.
 				]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'doc'
 					children: [
-						pml.Node{
+						pdml.Node{
 							name: 'title'
 							children: [
 								'First test',
 							]
 						},
 						'This is a',
-						pml.Node{
+						pdml.Node{
 							name: 'i'
 							children: [
 								'simple',
@@ -51,20 +51,20 @@ pub const user_manual = PMLTestSuite{
 						        [image (source = images/strawberries.jpg)]
 						    ]
 						]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'doc'
 					children: [
-						pml.Node{
+						pdml.Node{
 							name: 'title'
 							children: [
 								'PML Document Example',
 							]
 						},
-						pml.Node{
+						pdml.Node{
 							name: 'ch'
 							children: [
-								pml.Node{
+								pdml.Node{
 									name: 'title'
 									children: [
 										'Chapter 1',
@@ -75,21 +75,21 @@ pub const user_manual = PMLTestSuite{
 								'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.',
 							]
 						},
-						pml.Node{
+						pdml.Node{
 							name: 'ch'
 							children: [
-								pml.Node{
+								pdml.Node{
 									name: 'title'
 									children: [
 										'Chapter 2',
 									]
 								},
 								'Paragraph',
-								pml.Node{
+								pdml.Node{
 									name: 'image'
-									attributes: pml.Attributes{
+									attributes: pdml.Attributes{
 										children: [
-											pml.Attribute{
+											pdml.Attribute{
 												name: 'source'
 												value: 'images/strawberries.jpg'
 											},
@@ -108,12 +108,12 @@ pub const user_manual = PMLTestSuite{
 			input: '[p (html_style = "color:red; border:1px dashed blue")
 				    It is important to note that ...
 				]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'p'
-					attributes: pml.Attributes{
+					attributes: pdml.Attributes{
 						children: [
-							pml.Attribute{
+							pdml.Attribute{
 								name: 'html_style'
 								value: 'color:red; border:1px dashed blue'
 							},
@@ -139,27 +139,27 @@ pub const user_manual = PMLTestSuite{
 		        comment -]
 		-]
 		More text]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'sample'
 					children: [
 						'This is',
-						pml.Comment{
+						pdml.Comment{
 							children: [
 								'good',
 							]
 						},
 						'awesome.',
-						pml.Comment{
+						pdml.Comment{
 							children: [
 								'TODO: explain why',
 							]
 						},
 						'Text',
-						pml.Comment{
+						pdml.Comment{
 							children: [
 								'This [i bad] text not show.',
-								pml.Comment{
+								pdml.Comment{
 									children: [
 										'a',
 										'nested',
@@ -177,8 +177,8 @@ pub const user_manual = PMLTestSuite{
 			name: 'Fifth Example'
 			desc: 'Empty attribute list.'
 			input: '[div () text]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'div'
 					children: [
 						'text',
@@ -190,8 +190,8 @@ pub const user_manual = PMLTestSuite{
 			name: 'Sixth Example'
 			desc: 'Node with children having text starting with parentheses.'
 			input: '[i() (organic = healthy)]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'i'
 					children: [
 						'(organic = healthy)',
@@ -203,16 +203,16 @@ pub const user_manual = PMLTestSuite{
 			name: 'Seventh Example'
 			desc: 'Node with no children and no parentheses around attributes.'
 			input: '[image source="images/juicy apple.png" width=400]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'image'
-					attributes: pml.Attributes{
+					attributes: pdml.Attributes{
 						children: [
-							pml.Attribute{
+							pdml.Attribute{
 								name: 'source'
 								value: 'images/juicy apple.png'
 							},
-							pml.Attribute{
+							pdml.Attribute{
 								name: 'width'
 								value: '400'
 							},
@@ -233,17 +233,17 @@ pub const user_manual = PMLTestSuite{
         1   3   3   1
 		]
 		]'
-			expected: pml.PMLDoc{
-				root: pml.Node{
+			expected: pdml.Document{
+				root: pdml.Node{
 					name: 'sample'
 					children: [
-						pml.Node{
+						pdml.Node{
 							name: 'header'
 							children: [
 								'A Pascal Triangle',
 							]
 						},
-						pml.Node{
+						pdml.Node{
 							name: 'monospace'
 							children: [
 								'

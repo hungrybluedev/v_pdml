@@ -1,4 +1,4 @@
-import pml
+import pdml
 
 fn main() {
 	sample := '[doc
@@ -9,6 +9,6 @@ fn main() {
 		[paragraph Another paragraph.]
 	]
 ]'
-	doc := pml.PMLDoc.parse_string(sample)!
+	doc := pdml.Document.parse_string(sample)!
 	println(doc)
 }

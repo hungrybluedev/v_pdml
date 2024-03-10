@@ -1,4 +1,4 @@
-module pml
+module pdml
 
 import strings
 
@@ -43,7 +43,7 @@ pub struct EncodingConfig {
 	offset               string
 	indent               string = '\t'
 	spacing              string = ' '
-	line_break_threshold int    = pml.default_line_break_threshold
+	line_break_threshold int    = pdml.default_line_break_threshold
 }
 
 fn escape_plaintext(content string) string {
@@ -242,6 +242,6 @@ pub fn (node Node) str() string {
 	return node.encode().output()
 }
 
-pub fn (doc PMLDoc) str() string {
+pub fn (doc Document) str() string {
 	return doc.root.str()
 }

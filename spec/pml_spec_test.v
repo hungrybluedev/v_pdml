@@ -1,6 +1,6 @@
 module main
 
-import pml
+import pdml
 import spec.cases
 
 const test_suites = [
@@ -10,11 +10,11 @@ const test_suites = [
 fn test_all_cases() ! {
 	for suite in test_suites {
 		for case in suite.cases {
-			parsed_doc := pml.PMLDoc.parse_string(case.input) or {
+			parsed_doc := pdml.Document.parse_string(case.input) or {
 				assert false, 'Failed to parse document for ${case.name}: ${err}'
 				// Dummy return value. The test will fail and won't use this.
-				pml.PMLDoc{
-					root: pml.Node{
+				pdml.Document{
+					root: pdml.Node{
 						name: 'ignore'
 					}
 				}

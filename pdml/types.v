@@ -1,4 +1,4 @@
-module pml
+module pdml
 
 pub type Child = Comment | Node | string
 
@@ -32,7 +32,7 @@ pub:
 	children   []Child
 }
 
-pub struct PMLDoc {
+pub struct Document {
 pub:
 	root Node
 }

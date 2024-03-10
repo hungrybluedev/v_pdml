@@ -1,6 +1,6 @@
 module spec
 
-import pml { PMLDoc }
+import pdml { Document }
 
 pub struct PMLTestSuite {
 pub:
@@ -14,5 +14,5 @@ pub:
 	name     string
 	desc     string
 	input    string
-	expected PMLDoc
+	expected Document
 }

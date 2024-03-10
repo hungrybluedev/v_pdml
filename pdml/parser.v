@@ -320,7 +320,7 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 				general_child_content.write_u8(ch)
 				continue
 			}
-			` `, `\t` {
+			` `, `\t`, `\n` {
 				if reading_monospace {
 					general_child_content.write_u8(ch)
 					continue
@@ -330,7 +330,8 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 						return error('Expected node name to follow immediately after opening bracket.')
 					}
 					.reading_node_name {
-						tag_name := name_buffer.str().to_lower()
+						mut tag_name_clone := name_buffer.clone()
+						tag_name := tag_name_clone.str().to_lower()
 						if tag_name == 'monospace' {
 							reading_monospace = true
 						} else if tag_name in pdml.nodes_without_children {
@@ -342,10 +343,11 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 							}
 						}
 						// We are done reading the node name.
-						// Restore the tag name.
-						name_buffer = strings.new_builder(pdml.default_builder_length)
-						name_buffer.write_string(tag_name)
-						current_state = .waiting_for_attributes
+						if reading_monospace {
+							current_state = .reading_child_string_content
+						} else {
+							current_state = .waiting_for_attributes
+						}
 					}
 					.waiting_for_attributes, .waiting_for_child {
 						// We skip whitespace
@@ -363,58 +365,6 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 					else {
 						current_state = .reading_child_string_content
 						general_child_content.write_u8(ch)
-					}
-				}
-			}
-			`\n` {
-				if reading_monospace {
-					general_child_content.write_u8(ch)
-					continue
-				}
-				if children.len == 0 {
-					tag_name := name_buffer.str().to_lower()
-					if tag_name == 'monospace' {
-						reading_monospace = true
-					} else if tag_name in pdml.nodes_without_children {
-						// We do not need to wait for '(' to start parsing attributes.
-						attributes = parse_attributes(mut reader, true)!
-						return Node{
-							name: tag_name
-							attributes: attributes
-						}
-					}
-					// We are done reading the node name.
-					// Restore the tag name.
-					name_buffer = strings.new_builder(pdml.default_builder_length)
-					name_buffer.write_string(tag_name)
-					current_state = .reading_child_string_content
-					if reading_monospace {
-						general_child_content.write_u8(ch)
-						continue
-					}
-				}
-				match current_state {
-					.waiting_for_node_name {
-						return error('Expected node name to follow immediately after opening bracket.')
-					}
-					.reading_node_name {
-						// We are done reading the node name.
-						current_state = .waiting_for_attributes
-					}
-					.waiting_for_attributes, .waiting_for_child {
-						// We skip whitespace
-					}
-					.reading_child_string_content {
-						if general_child_content.len > 0 {
-							if reading_monospace {
-								children << Child(general_child_content.str())
-							} else {
-								trimmed_content := general_child_content.str().trim_space()
-								if trimmed_content.len > 0 {
-									children << Child(trimmed_content)
-								}
-							}
-						}
 					}
 				}
 			}

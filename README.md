@@ -1,5 +1,8 @@
 # v_pdml
 
+[![Code Quality](https://github.com/hungrybluedev/v_pdml/actions/workflows/ci.yml/badge.svg)](https://github.com/hungrybluedev/v_pdml/actions/workflows/ci.yml)
+[![Examples](https://img.shields.io/badge/Examples-View-blue?style=plastic)](examples)
+
 ## About
 
 **`v_pdml`** is a custom implementation of the [PDML (Practical Data and Markup Language)][1]
@@ -67,7 +70,7 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 If you like my work, and would want to discuss how I can help you, you can book a call
 with me.
 
-[![Book a call](https://img.shields.io/badge/Book%20a%20call-Consulting-blue?style=for-the-badge)](https://tidycal.com/hungrybluedev)
+[![Book a call](https://img.shields.io/badge/Book%20a%20call-Consulting-blue?style=plastic)](https://tidycal.com/hungrybluedev)
 
 [1]: https://pml-lang.dev/index.html
 [2]: https://github.com/vlang/v/?tab=readme-ov-file#installing-v-from-source

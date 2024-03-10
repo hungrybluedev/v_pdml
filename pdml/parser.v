@@ -305,10 +305,21 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 	mut children := []Child{}
 
 	mut reading_monospace := false
+	mut found_slash := false
 
 	for {
 		ch := next_char(mut reader, mut local_buf)!
+		if found_slash {
+			general_child_content.write_u8(ch)
+			found_slash = false
+			continue
+		}
 		match ch {
+			`\\` {
+				found_slash = true
+				general_child_content.write_u8(ch)
+				continue
+			}
 			` `, `\t` {
 				if reading_monospace {
 					general_child_content.write_u8(ch)

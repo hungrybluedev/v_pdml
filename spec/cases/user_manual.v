@@ -258,5 +258,18 @@ pub const user_manual = PMLTestSuite{
 				}
 			}
 		},
+		PMLTestCase{
+			name: 'Ninth Example'
+			desc: 'Node with escaped characters.'
+			input: r'[foo Characters \[, \], and \\ must be escaped.]'
+			expected: pdml.Document{
+				root: pdml.Node{
+					name: 'foo'
+					children: [
+						r'Characters \[, \], and \\ must be escaped.',
+					]
+				}
+			}
+		},
 	]
 }

@@ -29,7 +29,7 @@ jobs:
           ./v symlink -githubci && git clone ../v_pdml/ ~/.vmodules/v_pdml
 
       - name: Run tests
-        run: cd v_pdml && v test .
+        run: ls && cd v_pdml && v test .
 
       - name: Ensure code is formatted
         run: cd v_pdml && v fmt -verify .

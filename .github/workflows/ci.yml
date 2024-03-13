@@ -26,7 +26,7 @@ jobs:
       - name: Build V
         run: |
           cd v && make
-          ./v symlink -githubci && git clone ../v_pdml/ ~/.vmodules/v_pdml
+          ./v symlink -githubci && git clone ../v_pdml/ ~/.vmodules/pdml
 
       - name: Run tests
         run: ls && cd v_pdml && v test .

@@ -317,7 +317,6 @@ fn parse_node_after_bracket(mut reader io.Reader) !Child {
 		match ch {
 			`\\` {
 				found_slash = true
-				general_child_content.write_u8(ch)
 				continue
 			}
 			` `, `\t`, `\n` {

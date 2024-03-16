@@ -264,7 +264,7 @@ pub const user_manual = PMLTestSuite{
 				root: pdml.Node{
 					name: 'foo'
 					children: [
-						r'Characters \[, \], and \\ must be escaped.',
+						'Characters [, ], and \\ must be escaped.',
 					]
 				}
 			}

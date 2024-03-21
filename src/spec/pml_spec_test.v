@@ -1,7 +1,7 @@
 module main
 
 import pdml
-import spec.cases
+import src.spec.cases
 
 const test_suites = [
 	cases.user_manual,
